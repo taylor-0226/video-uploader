@@ -1,6 +1,7 @@
 const AWS = require("aws-sdk")
 const { json } = require("express")
 const { orderBy } = require("lodash")
+require('dotenv').config()
 
 // TODO: insert the valid endpoint here
 const s3Endpoint = new AWS.Endpoint("")
@@ -21,9 +22,10 @@ const BUCKET_NAME = "clipppy" //your bucket name.
 
 const UploadController = {
   test: async (req, res) => {
-    // const buckets = await s3.listBuckets().promise();
-    // console.log(buckets);
-    res.send(`${"Hello"}`)
+    const buckets = await s3.listBuckets().promise();
+    console.log(buckets)
+    
+    res.send(`${buckets}`)
   },
   initializeMultipartUpload: async (req, res) => {
     const { name } = req.body
