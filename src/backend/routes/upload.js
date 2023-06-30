@@ -6,6 +6,7 @@ const router = Router()
 router.post("/uploads/initializeMultipartUpload", UploadController.initializeMultipartUpload)
 router.post("/uploads/getMultipartPreSignedUrls", UploadController.getMultipartPreSignedUrls)
 router.post("/uploads/finalizeMultipartUpload", UploadController.finalizeMultipartUpload)
+router.post("/uploads/concatenateFiles", UploadController.concatenateFiles)
 router.get("/uploads/test", UploadController.test)
 
 module.exports = { router }

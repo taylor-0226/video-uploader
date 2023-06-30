@@ -7,8 +7,8 @@ const s3Endpoint = new AWS.Endpoint("")
 
 // TODO: insert your credentials here
 const s3Credentials = new AWS.Credentials({
-  accessKeyId: "AKIAWDF35LFWRT67TMYQ", //your access key : AKIAWDF35LFWRT67TMYQ 
-  secretAccessKey: "ZDE4Y4Ow9Cc8ZI+KTPlaBv8UTmzLfkJKFJqXjEi2",//secret key : ZDE4Y4Ow9Cc8ZI+KTPlaBv8UTmzLfkJKFJqXjEi2
+  accessKeyId: process.env.AWS_ACCESS_KEY, //your access key 
+  secretAccessKey: process.env.AWS_SECRET_KEY,//secret key 
 })
 
 const s3 = new AWS.S3({
@@ -21,9 +21,9 @@ const BUCKET_NAME = "clipppy" //your bucket name.
 
 const UploadController = {
   test: async (req, res) => {
-    const buckets = await s3.listBuckets().promise();
+    // const buckets = await s3.listBuckets().promise();
     // console.log(buckets);
-    res.send(buckets)
+    res.send(`${"Hello"}`)
   },
   initializeMultipartUpload: async (req, res) => {
     const { name } = req.body
@@ -93,6 +93,46 @@ const UploadController = {
     
     res.send(result)
   },
+
+  concatenateFiles: async (req, res) => {
+    const { fileKeys, outputKey } = req.body;
+
+    const command = ffmpeg();
+
+    for (let fileKey of fileKeys) {
+      const fileStream = s3.getObject({ Bucket: BUCKET_NAME, Key: fileKey }).createReadStream();
+      command.input(fileStream);
+    }
+
+    // Transform stream that removes metadata from the output stream
+    const removeMetadata = new Transform({
+      transform(chunk, encoding, callback) {
+        this.push(chunk.slice(chunk.indexOf('mdat')));
+        callback();
+      }
+    });
+
+    const concatStream = command
+      .on('error', function(err) {
+        console.log('An error occurred: ' + err.message);
+        res.status(500).send({ error: 'Failed to concatenate files' });
+      })
+      .format('mp4')
+      .stream()
+      .pipe(removeMetadata); // remove metadata
+
+    const upload = new S3UploadStream({ Bucket: BUCKET_NAME, Key: outputKey, ACL: 'public-read' });
+
+    concatStream.pipe(upload)
+      .on('uploaded', function(details) {
+        console.log('Successfully uploaded data');
+        res.send({ fileKey: outputKey });
+      })
+      .on('error', function(error) {
+        console.log('Error uploading data: ', error);
+        res.status(500).send({ error: 'Failed to upload file' });
+      });
+  }
 }
 
 module.exports = { UploadController }
