@@ -90,7 +90,7 @@ const UploadController = {
     }
 
     const result = await s3.completeMultipartUpload(multipartParams).promise()    
-
+    
     res.send(result)
   },
 }

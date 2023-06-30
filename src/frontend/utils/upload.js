@@ -26,6 +26,7 @@ export class Uploader {
     this.fileKey = null
     this.onProgressFn = () => {}
     this.onErrorFn = () => {}
+    this.onFinishFn = () => {}
   }
 
   start() {
@@ -36,10 +37,10 @@ export class Uploader {
     try {
       // adding the the file extension (if present) to fileName
       let fileName = this.fileName
-      const ext = this.file.name.split(".").pop()
-      if (ext) {
-        fileName += `.${ext}`
-      }
+      // const ext = this.file.name.split(".").pop()
+      // if (ext) {
+      //   fileName += `.${ext}`
+      // }
 
       // initializing the multipart request
       const videoInitializationUploadInput = {
@@ -142,12 +143,14 @@ export class Uploader {
         parts: this.uploadedParts,
       }
 
-      await api.request({
+      const result = await api.request({
         url: "/uploads/finalizeMultipartUpload",
         method: "POST",
         data: videoFinalizationMultiPartInput,
       })
-    }
+      
+      this.onFinishFn(result.data)
+    }    
   }
 
   sendChunk(chunk, part, sendChunkStarted) {
@@ -254,6 +257,11 @@ export class Uploader {
 
   onError(onError) {
     this.onErrorFn = onError
+    return this
+  }
+
+  onFinish(onFinish){
+    this.onFinishFn = onFinish
     return this
   }
 

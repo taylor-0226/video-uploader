@@ -1,10 +1,12 @@
 import "./App.css"
 import { Uploader } from "./utils/upload"
 import { useEffect, useState } from "react"
+import {Progress, Button, Upload} from "antd"
 
 function App() {
   const [file, setFile] = useState(undefined)
   const [uploader, setUploader] = useState(undefined)
+  const [progress, setProgress] = useState(0)
 
   useEffect(() => {
     if (file) {
@@ -24,6 +26,7 @@ function App() {
           if (newPercentage !== percentage) {
             percentage = newPercentage
             console.log(`${percentage}%`)
+            setProgress(percentage)
           }
         })
         .onError((error) => {
@@ -31,7 +34,7 @@ function App() {
           console.error(error)
         })
 
-      uploader.start()
+      // uploader.start()
     }
   }, [file])
 
@@ -43,19 +46,27 @@ function App() {
   }
 
   return (
-    <div className="App">
+    <div className="Container">
       <h1>Upload your file</h1>
-      <div>
-        <input
+      <div className="mt-1">
+        {/* <input
           type="file"
           onChange={(e) => {
             setFile(e.target?.files?.[0])
           }}
-        />
+        /> */}
+        <Upload>
+          
+        </Upload>
       </div>
-      <div>
-        <button onClick={onCancel}>Cancel</button>
-      </div>
+
+      {
+        file && <>
+          <Progress percent={progress}></Progress>
+          <Button danger onClick={onCancel}>Cancel</Button>
+        </>
+      }      
+      
     </div>
   )
 }
