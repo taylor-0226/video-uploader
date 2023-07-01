@@ -107,10 +107,10 @@ const UploadController = {
       for (let fileKey of inputUrls) {      
         console.log(fileKey.split('/').pop())
   
-        const res = await s3.headObject({
-          Bucket: BUCKET_NAME,
-          Key: fileKey.split('/').pop()
-        }).promise()                  
+        // await s3.headObject({
+        //   Bucket: BUCKET_NAME,
+        //   Key: fileKey.split('/').pop()
+        // }).promise()                  
         
         command.input(fileKey)
       }    
