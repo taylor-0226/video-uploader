@@ -131,7 +131,7 @@ function App() {
           <Input className="upload-input" placeholder="Input output url" status={invalid && !outputUrl? 'error':''} value={outputUrl} onChange={(e) => setOutputUrl(e.target.value)}/>
 
           <Button className="upload-btn" type="primary" onClick={handleClick} loading={concatLoading} style={{marginRight: '10px'}}>Concate</Button>
-          <Button className="upload-btn" type="primary" onClick={handleReset} loading={concatLoading}>Reset</Button>
+          <Button className="upload-btn" onClick={handleReset}>Reset</Button>
 
           {invalid}
           <div style={{marginTop:'12px'}}>
