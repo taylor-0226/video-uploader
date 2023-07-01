@@ -1,13 +1,13 @@
 import axios from "axios"
 
 // initializing axios
-const api = axios.create({
-  baseURL: "http://15.204.52.222:3000",
+const api = axios.create({  
+  baseURL: 'http://localhost:3001',
 })
 
 // original source: https://github.com/pilovm/multithreaded-uploader/blob/master/frontend/uploader.js
 export class Uploader {
-  constructor(options) {
+  constructor(options = {}) {
     // this must be bigger than or equal to 5MB,
     // otherwise AWS will respond with:
     // "Your proposed upload is smaller than the minimum allowed size"
@@ -250,6 +250,23 @@ export class Uploader {
     })
   }
 
+  concate(data) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const res = await api.post('uploads/concat', data)
+        
+        if(res.data) {          
+          resolve(res.data.Location)
+        } else {
+          reject(res.error)
+        }        
+      }catch(e) {
+        reject(e)
+      }
+      
+    })
+  }
+
   onProgress(onProgress) {
     this.onProgressFn = onProgress
     return this
@@ -275,3 +292,4 @@ export class Uploader {
     this.aborted = true
   }
 }
+

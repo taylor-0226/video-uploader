@@ -1,14 +1,9 @@
 const AWS = require("aws-sdk")
-const { json } = require("express")
 const { orderBy } = require("lodash")
-require('dotenv').config()
 const fs = require('fs');
 const ffmpeg = require('fluent-ffmpeg');
-const { Transform } = require('stream');
-const { S3UploadStream } = require('s3-upload-stream');
 
-// TODO: insert the valid endpoint here
-const s3Endpoint = new AWS.Endpoint("")
+require('dotenv').config()
 
 // TODO: insert your credentials here
 const s3Credentials = new AWS.Credentials({
@@ -21,9 +16,10 @@ const s3 = new AWS.S3({
   region: 'us-west-2',
   credentials: s3Credentials,
 })
+const s3Stream = require('s3-upload-stream')(s3);
 
 // TODO: insert your bucket name here
-const BUCKET_NAME = "clipppy" //your bucket name.
+const BUCKET_NAME = process.env.AWS_BUCKET //your bucket name.
 
 const UploadController = {
   test: async (req, res) => {
@@ -102,44 +98,50 @@ const UploadController = {
   },
 
   concatenateFiles: async (req, res) => {
-    const { fileKeys, outputKey } = req.body;
+    const { inputUrls, outputUrl } = req.body;
 
-    const command = ffmpeg();
+    try{
+      const command = ffmpeg();
 
-    for (let fileKey of fileKeys) {      
-      const fileStream = s3.getObject({ Bucket: BUCKET_NAME, Key: fileKey }).createReadStream();
-      command.input(fileStream);
+      console.log('start')
+      for (let fileKey of inputUrls) {      
+        console.log(fileKey.split('/').pop())
+  
+        const res = await s3.headObject({
+          Bucket: BUCKET_NAME,
+          Key: fileKey.split('/').pop()
+        }).promise()                  
+        
+        command.input(fileKey)
+      }    
+      res.send()
+  
+      console.log('start merging...')
+      command      
+        .mergeToFile('output.mp4')    
+        .on('end', async () => {
+          const result  = await s3.upload({
+            Bucket: process.env.AWS_BUCKET,
+            Key: outputUrl,
+            Body: fs.readFileSync('output.mp4'),
+            ACL: 'public-read' 
+           }).promise() 
+           res.send(result)
+        })
+        .on('error', (err) => {
+          console.log('err:', err)
+          res.send({error: err})
+        })    
+    }catch(e){
+      console.log(e)
+      if(e.code == "NotFound") {
+        res.send({message:`Object doesn't exist`})
+      } else {
+        res.send({message:'something wrong'})
+      }
+      
     }
-
-    // // Transform stream that removes metadata from the output stream
-    // const removeMetadata = new Transform({
-    //   transform(chunk, encoding, callback) {
-    //     this.push(chunk.slice(chunk.indexOf('mdat')));
-    //     callback();
-    //   }
-    // });
-
-    // const concatStream = command
-    //   .on('error', function(err) {
-    //     console.log('An error occurred: ' + err.message);
-    //     res.status(500).send({ error: 'Failed to concatenate files' });
-    //   })
-    //   .format('mp4')
-    //   .stream()
-    //   .pipe(removeMetadata); // remove metadata
-
-    // const upload = new S3UploadStream({ Bucket: BUCKET_NAME, Key: outputKey, ACL: 'public-read' });
-
-    // concatStream.pipe(upload)
-    //   .on('uploaded', function(details) {
-    //     console.log('Successfully uploaded data');
-    //     res.send({ fileKey: outputKey });
-    //   })
-    //   .on('error', function(error) {
-    //     console.log('Error uploading data: ', error);
-    //     res.status(500).send({ error: 'Failed to upload file' });
-    //   });
-    res.send({fileKeys, outputKey})
+      
   }
 }
 
