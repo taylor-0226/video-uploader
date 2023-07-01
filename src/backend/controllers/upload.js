@@ -113,8 +113,7 @@ const UploadController = {
         // }).promise()                  
         
         command.input(fileKey)
-      }    
-      res.send()
+      }          
   
       console.log('start merging...')
       command      
