@@ -2,6 +2,10 @@ const AWS = require("aws-sdk")
 const { json } = require("express")
 const { orderBy } = require("lodash")
 require('dotenv').config()
+const fs = require('fs');
+const ffmpeg = require('fluent-ffmpeg');
+const { Transform } = require('stream');
+const { S3UploadStream } = require('s3-upload-stream');
 
 // TODO: insert the valid endpoint here
 const s3Endpoint = new AWS.Endpoint("")
@@ -102,39 +106,40 @@ const UploadController = {
 
     const command = ffmpeg();
 
-    for (let fileKey of fileKeys) {
+    for (let fileKey of fileKeys) {      
       const fileStream = s3.getObject({ Bucket: BUCKET_NAME, Key: fileKey }).createReadStream();
       command.input(fileStream);
     }
 
-    // Transform stream that removes metadata from the output stream
-    const removeMetadata = new Transform({
-      transform(chunk, encoding, callback) {
-        this.push(chunk.slice(chunk.indexOf('mdat')));
-        callback();
-      }
-    });
+    // // Transform stream that removes metadata from the output stream
+    // const removeMetadata = new Transform({
+    //   transform(chunk, encoding, callback) {
+    //     this.push(chunk.slice(chunk.indexOf('mdat')));
+    //     callback();
+    //   }
+    // });
 
-    const concatStream = command
-      .on('error', function(err) {
-        console.log('An error occurred: ' + err.message);
-        res.status(500).send({ error: 'Failed to concatenate files' });
-      })
-      .format('mp4')
-      .stream()
-      .pipe(removeMetadata); // remove metadata
+    // const concatStream = command
+    //   .on('error', function(err) {
+    //     console.log('An error occurred: ' + err.message);
+    //     res.status(500).send({ error: 'Failed to concatenate files' });
+    //   })
+    //   .format('mp4')
+    //   .stream()
+    //   .pipe(removeMetadata); // remove metadata
 
-    const upload = new S3UploadStream({ Bucket: BUCKET_NAME, Key: outputKey, ACL: 'public-read' });
+    // const upload = new S3UploadStream({ Bucket: BUCKET_NAME, Key: outputKey, ACL: 'public-read' });
 
-    concatStream.pipe(upload)
-      .on('uploaded', function(details) {
-        console.log('Successfully uploaded data');
-        res.send({ fileKey: outputKey });
-      })
-      .on('error', function(error) {
-        console.log('Error uploading data: ', error);
-        res.status(500).send({ error: 'Failed to upload file' });
-      });
+    // concatStream.pipe(upload)
+    //   .on('uploaded', function(details) {
+    //     console.log('Successfully uploaded data');
+    //     res.send({ fileKey: outputKey });
+    //   })
+    //   .on('error', function(error) {
+    //     console.log('Error uploading data: ', error);
+    //     res.status(500).send({ error: 'Failed to upload file' });
+    //   });
+    res.send({fileKeys, outputKey})
   }
 }
 
