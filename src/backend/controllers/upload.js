@@ -118,7 +118,7 @@ const UploadController = {
   
       console.log('start merging...')
       command      
-        .mergeToFile('output.mp4')    
+        .mergeToFile('/tmp/output.mp4')    
         .on('end', async () => {
           const result  = await s3.upload({
             Bucket: process.env.AWS_BUCKET,
