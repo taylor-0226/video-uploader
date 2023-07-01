@@ -14,6 +14,7 @@ const s3Credentials = new AWS.Credentials({
 
 const s3 = new AWS.S3({
   // endpoint: s3Endpoint,
+  region: 'us-west-2',
   credentials: s3Credentials,
 })
 
