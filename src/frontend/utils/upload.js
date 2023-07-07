@@ -2,7 +2,7 @@ import axios from "axios"
 
 // initializing axios
 const api = axios.create({  
-  baseURL: 'http://15.204.52.222:3000',
+  baseURL: 'http://34.222.70.190:3000',
 })
 
 // original source: https://github.com/pilovm/multithreaded-uploader/blob/master/frontend/uploader.js
